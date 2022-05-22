@@ -1,24 +1,25 @@
-import { useRef } from 'react';
 import type { useEffect, useLayoutEffect } from 'react';
+import { useRef } from 'react';
 
 type effectHookType = typeof useEffect | typeof useLayoutEffect;
 
-export const createUpdateEffect: (hook: effectHookType) => effectHookType =
-  (hook) => (effect, deps) => {
+type TypeFn = (hook: effectHookType) => effectHookType;
+
+export const createUpdateEffect: TypeFn = (hook) => {
+  return (effect, deps?) => {
     const isMounted = useRef(false);
 
-    // for react-refresh
+    // for re-render
     hook(() => {
-      return () => {
-        isMounted.current = false;
-      };
+      isMounted.current = true;
     }, []);
 
     hook(() => {
-      if (!isMounted.current) {
-        isMounted.current = true;
-      } else {
-        return effect();
-      }
+      return () => {
+        if (isMounted.current) {
+          effect();
+        }
+      };
     }, deps);
   };
+};
