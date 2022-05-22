@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react-hooks';
 import { useEffect, useLayoutEffect } from 'react';
-import { createUpdateEffect } from '../index';
+import { createUpdateEffect } from '../createUpdateEffect';
 
 describe('createUpdateEffect', () => {
   it('should be defined', () => {
