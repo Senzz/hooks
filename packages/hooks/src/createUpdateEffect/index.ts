@@ -9,17 +9,19 @@ export const createUpdateEffect: TypeFn = (hook) => {
   return (effect, deps?) => {
     const isMounted = useRef(false);
 
-    // for re-render
+    // for react-refresh
     hook(() => {
-      isMounted.current = true;
+      return () => {
+        isMounted.current = false;
+      };
     }, []);
 
     hook(() => {
-      return () => {
-        if (isMounted.current) {
-          effect();
-        }
-      };
+      if (!isMounted.current) {
+        isMounted.current = true;
+      } else {
+        return effect();
+      }
     }, deps);
   };
 };
