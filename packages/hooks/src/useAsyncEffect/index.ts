@@ -2,35 +2,31 @@ import type { DependencyList } from 'react';
 import { useEffect } from 'react';
 import { isFunction } from '../utils';
 
-function useAsyncEffect(
-  effect: () => AsyncGenerator<void, void, void> | Promise<void>,
-  deps?: DependencyList,
-) {
-  function isAsyncGenerator(
-    val: AsyncGenerator<void, void, void> | Promise<void>,
-  ): val is AsyncGenerator<void, void, void> {
-    return isFunction(val[Symbol.asyncIterator]);
-  }
+const useAsyncEffect = (effect: () => AsyncGenerator | Promise<void>, deps?: DependencyList) => {
   useEffect(() => {
+    function isAsyncGenerator(val: AsyncGenerator | Promise<void>): val is AsyncGenerator {
+      return isFunction(val[Symbol.asyncIterator]);
+    }
+
     const e = effect();
-    let cancelled = false;
-    async function execute() {
+    let isCanceled = false;
+    const execute = async () => {
       if (isAsyncGenerator(e)) {
         while (true) {
           const result = await e.next();
-          if (result.done || cancelled) {
+          if (result.done || isCanceled) {
             break;
           }
         }
       } else {
         await e;
       }
-    }
+    };
     execute();
     return () => {
-      cancelled = true;
+      isCanceled = true;
     };
   }, deps);
-}
+};
 
 export default useAsyncEffect;
