@@ -1,12 +1,14 @@
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
+import useLatest from '../useLatest';
 
-export type TDate = Date | string | number | undefined;
-export interface Options {
+export type TDate = Date | number | string | undefined;
+
+export type Options = {
   targetDate?: TDate;
   interval?: number;
   onEnd?: () => void;
-}
+};
 
 export interface FormattedRes {
   days: number;
@@ -16,11 +18,14 @@ export interface FormattedRes {
   milliseconds: number;
 }
 
-const calcLeft = (t: TDate) => {
-  if (!t) return 0;
-  let left = dayjs(t).valueOf() - new Date().getTime();
+const calcLeft = (t?: TDate) => {
+  if (!t) {
+    return 0;
+  }
+  // https://stackoverflow.com/questions/4310953/invalid-date-in-safari
+  const left = dayjs(t).valueOf() - new Date().getTime();
   if (left < 0) {
-    left = 0;
+    return 0;
   }
   return left;
 };
@@ -35,40 +40,40 @@ const parseMs = (milliseconds: number): FormattedRes => {
   };
 };
 
-const useCountdown = (options?: Options): [number, FormattedRes] => {
+const useCountdown = (options?: Options) => {
   const { targetDate, interval = 1000, onEnd } = options || {};
-  const [countdown, setCountdown] = useState(() => calcLeft(targetDate));
+
+  const [timeLeft, setTimeLeft] = useState(() => calcLeft(targetDate));
+
+  const onEndRef = useLatest(onEnd);
 
   useEffect(() => {
     if (!targetDate) {
       // for stop
-      setCountdown(0);
+      setTimeLeft(0);
       return;
     }
 
-    setCountdown(calcLeft(targetDate));
+    // 立即执行一次
+    setTimeLeft(calcLeft(targetDate));
 
-    const timer: NodeJS.Timer = setInterval(() => {
-      const left = calcLeft(targetDate);
-      setCountdown(left);
-      if (left === 0) {
+    const timer = setInterval(() => {
+      const targetLeft = calcLeft(targetDate);
+      setTimeLeft(targetLeft);
+      if (targetLeft === 0) {
         clearInterval(timer);
-        if (onEnd) {
-          onEnd();
-        }
+        onEndRef.current?.();
       }
     }, interval);
 
-    return () => {
-      clearInterval(timer);
-    };
+    return () => clearInterval(timer);
   }, [targetDate, interval]);
 
   const formattedRes = useMemo(() => {
-    return parseMs(countdown);
-  }, [countdown]);
+    return parseMs(timeLeft);
+  }, [timeLeft]);
 
-  return [countdown, formattedRes];
+  return [timeLeft, formattedRes] as const;
 };
 
 export default useCountdown;

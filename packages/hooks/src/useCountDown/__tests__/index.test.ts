@@ -1,5 +1,6 @@
 import { act, renderHook } from '@testing-library/react-hooks';
-import useCountDown, { TDate, Options } from '../index';
+import type { TDate, Options } from '../index';
+import useCountDown from '../index';
 
 // https://github.com/facebook/jest/issues/2234
 jest.spyOn(Date, 'now').mockImplementation(() => 1479427200000);
