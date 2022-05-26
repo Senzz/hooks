@@ -1,10 +1,10 @@
 import { useRef } from 'react';
 
-function useLatest<T>(value: T) {
-  const ref = useRef(value);
-  ref.current = value;
+const useLatest = <T>(val: T): T => {
+  const ref = useRef(val);
+  ref.current = val;
 
-  return ref;
-}
+  return ref.current;
+};
 
 export default useLatest;
